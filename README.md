@@ -17,9 +17,10 @@ A two-stage workflow for harmonizing CCI soil moisture data with SMAP standards 
 - **Script**: `03_Tif2Hdf5.py`  
   Converts outputs to HDF5 format with:
   - CDF-corrected CCI data
+  - NDVI data
   - ERA5-LAND meteorological data
   - DEM data
-  - Land cover data
+  - HWSD data
 
 ### 1.4 XGBoost Model Training
 - **Script**: `04_Bias_correction_XGBoost_Train.py`  
