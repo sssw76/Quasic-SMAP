@@ -1,60 +1,70 @@
-# Bias Correction and Gap Filling Workflow
-This project includes six Python scripts for soil moisture dataset bias correction (e.g., CCI), employing both CDF correction and XGBoost-based correction, as well as for gap filling. The main objective is to adjust CCI data to be consistent with SMAP data. The workflow is divided into two main parts: bias correction and gap filling .
+# Soil Moisture Dataset Bias Correction & Gap Filling Workflow
 
-1. Bias Correction Workflow
+A two-stage workflow for harmonizing CCI soil moisture data with SMAP standards and addressing data gaps using XGBoost models.
 
-This part applies both CDF correction and XGBoost correction to adjust CCI data to match SMAP.
+## 1. Bias Correction Workflow
+*Aligns CCI (1981-2022) with SMAP (2015-2022) through dual-stage correction*
 
-Pixel Correspondence Mapping
+### 1.1 Pixel Correspondence Mapping
+- **Script**: `01_CDF_correspondence.py`  
+  Establishes spatial alignment between CCI and SMAP pixels (2015-2022 baseline)
 
-Script: 01_CDF_correspondence.py
+### 1.2 Apply CDF Correction
+- **Script**: `02_Apply_CDF.py`  
+  Applies non-parametric CDF matching to entire CCI historical data (1981-2022)
 
-Establishes the one-to-one correspondence between CCI and SMAP pixels from 2015 to 2022.
+### 1.3 Data Format Conversion
+- **Script**: `03_Tif2Hdf5.py`  
+  Converts outputs to HDF5 format with:
+  - CDF-corrected CCI data
+  - ERA5-LAND meteorological data
+  - DEM data
+  - Land cover data
 
-Applying CDF Correction
+### 1.4 XGBoost Model Training
+- **Script**: `04_Bias_correction_XGBoost_Train.py`  
+  Trains residual correction model using:
+  - SMAP data as ground truth
+  - CDF-corrected CCI as primary input
+  - Auxiliary environmental features
 
-Script: 02_Apply_CDF.py
+### 1.5 XGBoost Bias Correction
+- **Script**: `05_Bias_correction_XGBoost_predict.py`  
+  Generates final corrected dataset (1981-2022) through model inference
 
-Applies the pixel correspondence from the previous step to the entire CCI dataset (1981–2022) to obtain CDF-corrected results.
+## 2. Gap Filling Workflow
+*Addresses missing values in bias-corrected data using environmental covariates*
 
-Data Format Conversion
+### 2.1 Data Preparation
+- **Script**: `03_Tif2Hdf5.py` (Reused)  
+  Packages for gap filling:
+  - Bias-corrected CCI with missing values
+  - Full-coverage ERA5-LAND data
+  - Static landscape features
 
-Script: 03_Tif2Hdf5.py
+### 2.2 Gap-Filling Model Training
+- **Script**: `04_Bias_correction_XGBoost_Train.py` (Modified)  
+  Trains on complete samples with:
+  - Artificial masking for validation
+  - Enhanced feature engineering
+  - Temporal covariates integration
 
-Converts the CDF-corrected results (from step 2) together with auxiliary datasets (e.g., ERA5-LAND) to HDF5 format for subsequent model training.
+### 2.3 Gap Imputation
+- **Script**: `06_Gap_filling_XGBoost_predict.py`  
+  Produces gap-free soil moisture dataset through:
+  - Spatial-temporal pattern learning
+  - Multi-feature joint prediction
+  - Uncertainty quantification
+ 
 
-XGBoost Model Training
+Key Implementation Notes:
 
-Script: 04_Bias_correction_XGBoost_Train.py
+Temporal Alignment: All scripts handle time-series synchronization between datasets
 
-Trains the XGBoost model using the HDF5-formatted dataset.
+Spatial Consistency: Maintains 0.25° grid resolution throughout processing
 
-XGBoost Bias Correction Prediction
+Model Persistence: Trained XGBoost models are saved for reproducibility
 
-Script: 05_Bias_correction_XGBoost_predict.py
+Validation: Includes embedded cross-validation routines in training scripts
 
-Uses the trained model to further correct the CDF-corrected data, producing the final bias-corrected results.
-
-
-
-2. Gap Filling Workflow
-
-This part fills gaps in the bias-corrected soil moisture data using auxiliary datasets.
-
-Data Format Conversion
-
-Script: 03_Tif2Hdf5.py
-
-Converts the bias-corrected results and auxiliary datasets into HDF5 format for gap-filling model training.
-
-XGBoost Model Training for Gap Filling
-
-Script: 04_Bias_correction_XGBoost_Train.py
-
-Trains an XGBoost model based on HDF5 data that includes samples with missing values.
-
-Gap Filling Prediction
-
-Script: 06_Gap_filling_XGBoost_predict.py
-
-Uses the trained model to predict and fill the missing values, generating a complete soil moisture dataset.
+HDF5 Structure: Uses hierarchical storage with metadata preservation
